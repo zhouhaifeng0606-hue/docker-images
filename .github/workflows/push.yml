@@ -1,0 +1,23 @@
+name: Push to ACR
+on:
+  workflow_dispatch:
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull from Docker Hub
+        run: |
+          docker pull python:3.10-slim
+          docker pull node:18-alpine
+          docker pull nginx:alpine
+
+      - name: Login to ACR
+        run: echo "${{ secrets.ALI_PASSWORD }}" | docker login ${{ secrets.ALI_REGISTRY }} -u ${{ secrets.ALI_USERNAME }} --password-stdin
+
+      - name: Push images
+        run: |
+          for img in python:3.10-slim node:18-alpine nginx:alpine; do
+            docker tag $img ${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/$img
+            docker push ${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/$img
+          done
+          echo "✅ 全部推送完成"
